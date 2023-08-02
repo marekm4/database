@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Database</title>
+</head>
+<body>
+<input onkeydown="send(this);">
+<script>
+    let websocketProtocol = "ws:";
+    if (document.location.protocol == "https:") {
+        websocketProtocol = "wss:";
+    }
+    let websocket = new WebSocket(websocketProtocol + "//" + document.location.host + document.location.pathname + "database");
+    websocket.onmessage = function (message) {
+        console.log(message.data);
+    };
+    let send = function (element) {
+        if (event.key === 'Enter') {
+            let message = element.value;
+            websocket.send(message);
+            element.value = '';
+        }
+    }
+</script>
+</body>
+</html>
