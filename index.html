@@ -5,10 +5,11 @@
     <title>Database</title>
 </head>
 <body>
-<input onkeydown="send(this);">
+<label for="query">Query</label>
+<input id="query" onkeydown="send(this);">
 <script>
     let websocketProtocol = "ws:";
-    if (document.location.protocol == "https:") {
+    if (document.location.protocol === "https:") {
         websocketProtocol = "wss:";
     }
     let websocket = new WebSocket(websocketProtocol + "//" + document.location.host + document.location.pathname + "database");

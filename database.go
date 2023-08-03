@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -19,7 +20,7 @@ type GetQuery struct {
 }
 
 func (q GetQuery) Execute(database Database) (string, error) {
-	return "", nil
+	return "getting", nil
 }
 
 type SetQuery struct {
@@ -28,7 +29,7 @@ type SetQuery struct {
 }
 
 func (q SetQuery) Execute(database Database) (string, error) {
-	return "", nil
+	return "setting", nil
 }
 
 type IncrementQuery struct {
@@ -37,7 +38,7 @@ type IncrementQuery struct {
 }
 
 func (q IncrementQuery) Execute(database Database) (string, error) {
-	return "", nil
+	return "incrementing", nil
 }
 
 type AppendQuery struct {
@@ -46,7 +47,7 @@ type AppendQuery struct {
 }
 
 func (q AppendQuery) Execute(database Database) (string, error) {
-	return "", nil
+	return "appending", nil
 }
 
 func ParseQuery(query string) (Query, error) {
@@ -69,8 +70,10 @@ func ParseQuery(query string) (Query, error) {
 		return SetQuery{key, value}, nil
 	}
 	if operation == "increment" {
+		fmt.Println(value)
 		numericValue, err := strconv.Atoi(value)
 		if err != nil {
+			fmt.Println(err.Error())
 			return nil, errors.New("invalid numeric value")
 		}
 		return IncrementQuery{key, numericValue}, nil
