@@ -1,22 +1,29 @@
 package main
 
 import (
-	"bytes"
-	"golang.org/x/net/websocket"
+	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"os"
 )
 
-func CreateDatabaseServer(database Database) func(ws *websocket.Conn) {
-	return func(ws *websocket.Conn) {
+var upgrader = websocket.Upgrader{}
+
+func CreateDatabaseServer(database Database) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer c.Close()
 		for {
-			buffer := make([]byte, 1024)
-			_, err := ws.Read(buffer)
+			mt, message, err := c.ReadMessage()
 			if err != nil {
 				log.Println(err)
+				break
 			}
-			query, err := ParseQuery(string(bytes.Trim(buffer, string([]byte{0}))))
+			query, err := ParseQuery(string(message))
 			output := ""
 			if err != nil {
 				output = err.Error()
@@ -28,9 +35,10 @@ func CreateDatabaseServer(database Database) func(ws *websocket.Conn) {
 					output = response
 				}
 			}
-			_, err = ws.Write([]byte(output))
+			err = c.WriteMessage(mt, []byte(output))
 			if err != nil {
 				log.Println(err)
+				break
 			}
 		}
 	}
@@ -41,7 +49,7 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
-	http.Handle("/database", websocket.Handler(CreateDatabaseServer(database)))
+	http.HandleFunc("/database", CreateDatabaseServer(database))
 	port := "8080"
 	if len(os.Getenv("PORT")) > 0 {
 		port = os.Getenv("PORT")

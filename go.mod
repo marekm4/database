@@ -1,5 +1,5 @@
-module marekm4/database
+module github.com/marekm4/database
 
 go 1.20
 
-require golang.org/x/net v0.13.0 // indirect
+require github.com/gorilla/websocket v1.5.0 // indirect
