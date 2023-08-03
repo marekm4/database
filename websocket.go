@@ -24,6 +24,7 @@ func CreateDatabaseServer(database Database) func(w http.ResponseWriter, r *http
 				break
 			}
 			query, err := ParseQuery(string(message))
+			log.Println(query)
 			output := ""
 			if err != nil {
 				output = err.Error()
