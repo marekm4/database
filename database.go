@@ -2,13 +2,16 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
 
 type Database struct {
 	Data map[string]any
+}
+
+func NewDatabase() Database {
+	return Database{make(map[string]any)}
 }
 
 type Query interface {
@@ -20,7 +23,22 @@ type GetQuery struct {
 }
 
 func (q GetQuery) Execute(database Database) (string, error) {
-	return "getting", nil
+	value, exists := database.Data[q.Key]
+	if !exists {
+		return "", errors.New("key not exists")
+	}
+	if exists {
+		if parsed, ok := value.(string); ok {
+			return parsed, nil
+		}
+		if parsed, ok := value.(int); ok {
+			return strconv.Itoa(parsed), nil
+		}
+		if parsed, ok := value.([]string); ok {
+			return strings.Join(parsed, "\n"), nil
+		}
+	}
+	return "", nil
 }
 
 type SetQuery struct {
@@ -29,7 +47,14 @@ type SetQuery struct {
 }
 
 func (q SetQuery) Execute(database Database) (string, error) {
-	return "setting", nil
+	value, exists := database.Data[q.Key]
+	if exists {
+		if _, ok := value.(string); !ok {
+			return "", errors.New("wrong type")
+		}
+	}
+	database.Data[q.Key] = q.Value
+	return "", nil
 }
 
 type IncrementQuery struct {
@@ -38,7 +63,18 @@ type IncrementQuery struct {
 }
 
 func (q IncrementQuery) Execute(database Database) (string, error) {
-	return "incrementing", nil
+	value, exists := database.Data[q.Key]
+	if exists {
+		parsed, ok := value.(int)
+		if !ok {
+			return "", errors.New("wrong type")
+		} else {
+			database.Data[q.Key] = parsed + q.Value
+		}
+	} else {
+		database.Data[q.Key] = q.Value
+	}
+	return "", nil
 }
 
 type AppendQuery struct {
@@ -47,7 +83,18 @@ type AppendQuery struct {
 }
 
 func (q AppendQuery) Execute(database Database) (string, error) {
-	return "appending", nil
+	value, exists := database.Data[q.Key]
+	if exists {
+		parsed, ok := value.([]string)
+		if !ok {
+			return "", errors.New("wrong type")
+		} else {
+			database.Data[q.Key] = append(parsed, q.Value)
+		}
+	} else {
+		database.Data[q.Key] = []string{q.Value}
+	}
+	return "", nil
 }
 
 func ParseQuery(query string) (Query, error) {
@@ -70,10 +117,8 @@ func ParseQuery(query string) (Query, error) {
 		return SetQuery{key, value}, nil
 	}
 	if operation == "increment" {
-		fmt.Println(value)
 		numericValue, err := strconv.Atoi(value)
 		if err != nil {
-			fmt.Println(err.Error())
 			return nil, errors.New("invalid numeric value")
 		}
 		return IncrementQuery{key, numericValue}, nil
