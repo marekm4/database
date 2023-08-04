@@ -7,9 +7,9 @@ func TestParseQuery_Ok(t *testing.T) {
 		Query    string
 		Expected Query
 	}{
-		"Empty":                {"get", EmptyQuery{}},
-		"Get":                  {"get user_name", GetQuery{"user_name"}},
-		"Set":                  {"set user_name john", SetQuery{"user_name", "john"}},
+		"Empty":                {"select", EmptyQuery{}},
+		"Select":               {"select user_name", SelectQuery{"user_name"}},
+		"Update":               {"update user_name john", UpdateQuery{"user_name", "john"}},
 		"Increment":            {"increment user_money 5", IncrementQuery{"user_money", 5}},
 		"Increment_non_nmeric": {"increment user_money a", IncrementQuery{"user_money", 0}},
 		"Append":               {"append user_history order 1", AppendQuery{"user_history", "order 1"}},

@@ -1,59 +1,37 @@
 package main
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 )
 
 type Query interface {
-	Execute(Database) (string, error)
+	Execute(Database) []string
 }
 
 type EmptyQuery struct {
 }
 
-func (q EmptyQuery) Execute(database Database) (string, error) {
-	return "", nil
+func (q EmptyQuery) Execute(database Database) []string {
+	return []string{}
 }
 
-type GetQuery struct {
+type SelectQuery struct {
 	Key string
 }
 
-func (q GetQuery) Execute(database Database) (string, error) {
-	value, exists := database.Data[q.Key]
-	if !exists {
-		return "", errors.New("key not exists")
-	}
-	if exists {
-		if parsed, ok := value.(string); ok {
-			return parsed, nil
-		}
-		if parsed, ok := value.(int); ok {
-			return strconv.Itoa(parsed), nil
-		}
-		if parsed, ok := value.([]string); ok {
-			return strings.Join(parsed, "\n"), nil
-		}
-	}
-	return "", nil
+func (q SelectQuery) Execute(database Database) []string {
+	return database.Select(q.Key)
 }
 
-type SetQuery struct {
+type UpdateQuery struct {
 	Key   string
 	Value string
 }
 
-func (q SetQuery) Execute(database Database) (string, error) {
-	value, exists := database.Data[q.Key]
-	if exists {
-		if _, ok := value.(string); !ok {
-			return "", errors.New("wrong type")
-		}
-	}
-	database.Data[q.Key] = q.Value
-	return "", nil
+func (q UpdateQuery) Execute(database Database) []string {
+	database.Update(q.Key, q.Value)
+	return []string{}
 }
 
 type IncrementQuery struct {
@@ -61,19 +39,9 @@ type IncrementQuery struct {
 	Value int
 }
 
-func (q IncrementQuery) Execute(database Database) (string, error) {
-	value, exists := database.Data[q.Key]
-	if exists {
-		parsed, ok := value.(int)
-		if !ok {
-			return "", errors.New("wrong type")
-		} else {
-			database.Data[q.Key] = parsed + q.Value
-		}
-	} else {
-		database.Data[q.Key] = q.Value
-	}
-	return "", nil
+func (q IncrementQuery) Execute(database Database) []string {
+	database.Increment(q.Key, q.Value)
+	return []string{}
 }
 
 type AppendQuery struct {
@@ -81,19 +49,9 @@ type AppendQuery struct {
 	Value string
 }
 
-func (q AppendQuery) Execute(database Database) (string, error) {
-	value, exists := database.Data[q.Key]
-	if exists {
-		parsed, ok := value.([]string)
-		if !ok {
-			return "", errors.New("wrong type")
-		} else {
-			database.Data[q.Key] = append(parsed, q.Value)
-		}
-	} else {
-		database.Data[q.Key] = []string{q.Value}
-	}
-	return "", nil
+func (q AppendQuery) Execute(database Database) []string {
+	database.Append(q.Key, q.Value)
+	return []string{}
 }
 
 func ParseQuery(query string) Query {
@@ -103,8 +61,8 @@ func ParseQuery(query string) Query {
 	}
 	operation := query[:i]
 	key := query[i+1:]
-	if operation == "get" {
-		return GetQuery{key}
+	if operation == "select" {
+		return SelectQuery{key}
 	}
 	i = strings.Index(key, " ")
 	if i < 0 {
@@ -112,8 +70,8 @@ func ParseQuery(query string) Query {
 	}
 	value := key[i+1:]
 	key = key[:i]
-	if operation == "set" {
-		return SetQuery{key, value}
+	if operation == "update" {
+		return UpdateQuery{key, value}
 	}
 	if operation == "increment" {
 		numericValue, _ := strconv.Atoi(value)

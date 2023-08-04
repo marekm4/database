@@ -1,168 +1,80 @@
 package main
 
 import (
-	"errors"
+	"gotest.tools/v3/assert"
 	"strconv"
-	"strings"
 	"testing"
 )
 
-func TestDatabase_GetQuery_NotExist(t *testing.T) {
+func TestDatabase_GetEmpty(t *testing.T) {
 	// Given empty database
 	database := NewDatabase()
 
 	// When we ask for not existing key
-	_, err := GetQuery{"user_name"}.Execute(database)
+	values := database.Select("not_exists")
 
 	// Then key does not exist
-	expectedErr := errors.New("key not exists")
-	if expectedErr.Error() != err.Error() {
-		t.Fatalf("%v expected, got %v", expectedErr, err)
-	}
+	assert.DeepEqual(t, values, []string{""})
 }
 
-func TestDatabase_SetQuery(t *testing.T) {
+func TestDatabase_Update(t *testing.T) {
 	// Given empty database
 	database := NewDatabase()
-	userName := "john"
-
-	// When we set value
-	_, err := SetQuery{"user_name", userName}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-
-	// Then value is set
-	result, err := GetQuery{"user_name"}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-	if userName != result {
-		t.Fatalf("%v expected, got %v", userName, result)
-	}
+	username := "john"
 
 	// When we update value
-	newUserName := "alice"
-	_, err = SetQuery{"user_name", newUserName}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
+	database.Update("username", username)
+
+	// Then value is set
+	values := database.Select("username")
+	assert.DeepEqual(t, values, []string{username})
+
+	// When we update value
+	newUsername := "alice"
+	database.Update("username", newUsername)
 
 	// Then value is updated
-	result, err = GetQuery{"user_name"}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-	if newUserName != result {
-		t.Fatalf("%v expected, got %v", newUserName, result)
-	}
+	values = database.Select("username")
+	assert.DeepEqual(t, values, []string{newUsername})
 }
 
-func TestDatabase_SetQuery_OverCounter(t *testing.T) {
-	// Given counter
-	database := NewDatabase()
-	_, err := IncrementQuery{"user_money", 5}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-
-	// When we try to set string over counter
-	_, err = SetQuery{"user_money", "john"}.Execute(database)
-
-	// Then it is wrong type
-	expectedErr := errors.New("wrong type")
-	if expectedErr.Error() != err.Error() {
-		t.Fatalf("%v expected, got %v", expectedErr, err)
-	}
-}
-
-func TestDatabase_IncrementQuery(t *testing.T) {
+func TestDatabase_Increment(t *testing.T) {
 	// Given empty database
 	database := NewDatabase()
 	money := 5
 
-	// When we set counter
-	_, err := IncrementQuery{"user_money", money}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
+	// When we increment counter
+	database.Increment("money", money)
 
 	// Then counter is set
-	result, err := GetQuery{"user_money"}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-	if strconv.Itoa(money) != result {
-		t.Fatalf("%v expected, got %v", strconv.Itoa(money), result)
-	}
+	values := database.Select("money")
+	assert.DeepEqual(t, values, []string{strconv.Itoa(money)})
 
 	// When we increment counter
-	_, err = IncrementQuery{"user_money", money}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
+	database.Increment("money", money)
 
 	// Then counter is incremented
-	result, err = GetQuery{"user_money"}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-	if strconv.Itoa(money*2) != result {
-		t.Fatalf("%v expected, got %v", strconv.Itoa(money*2), result)
-	}
+	values = database.Select("money")
+	assert.DeepEqual(t, values, []string{strconv.Itoa(money * 2)})
 }
 
-func TestDatabase_IncrementQuery_OverString(t *testing.T) {
-	// Given string
-	database := NewDatabase()
-	_, err := SetQuery{"user_name", "john"}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-
-	// When we try to increment counter over string
-	_, err = IncrementQuery{"user_name", 5}.Execute(database)
-
-	// Then it is wrong type
-	expectedErr := errors.New("wrong type")
-	if expectedErr.Error() != err.Error() {
-		t.Fatalf("%v expected, got %v", expectedErr, err)
-	}
-}
-
-func TestDatabase_AppendQuery(t *testing.T) {
+func TestDatabase_Append(t *testing.T) {
 	// Given empty database
 	database := NewDatabase()
 	firstOrder := "order 1"
 
 	// When we append value
-	_, err := AppendQuery{"user_orders", firstOrder}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
+	database.Append("orders", firstOrder)
 
-	// Then value is there
-	result, err := GetQuery{"user_orders"}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-	if firstOrder != result {
-		t.Fatalf("%v expected, got %v", firstOrder, result)
-	}
+	// Then value is appended
+	values := database.Select("orders")
+	assert.DeepEqual(t, values, []string{firstOrder})
 
-	// When we append another string
+	// When we append another value
 	secondOrder := "order 2"
-	_, err = AppendQuery{"user_orders", secondOrder}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
+	database.Append("orders", secondOrder)
 
-	// Then both strings are there
-	result, err = GetQuery{"user_orders"}.Execute(database)
-	if err != nil {
-		t.Fatalf("got unexpected %v", err)
-	}
-	if strings.Join([]string{firstOrder, secondOrder}, "\n") != result {
-		t.Fatalf("%v expected, got %v", strings.Join([]string{firstOrder, secondOrder}, "\n"), result)
-	}
+	// Then both values are there
+	values = database.Select("orders")
+	assert.DeepEqual(t, values, []string{firstOrder, secondOrder})
 }

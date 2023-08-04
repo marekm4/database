@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var Upgrader = websocket.Upgrader{}
@@ -24,17 +25,13 @@ func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.R
 			}
 			query := ParseQuery(string(message))
 			log.Println(query)
-			output := ""
-			response, err := query.Execute(database)
-			if err != nil {
-				output = err.Error()
-			} else {
-				output = response
-			}
-			err = connection.WriteMessage(messageType, []byte(output))
-			if err != nil {
-				log.Println(err)
-				break
+			values := query.Execute(database)
+			if len(values) > 0 {
+				err = connection.WriteMessage(messageType, []byte(strings.Join(values, "\n")))
+				if err != nil {
+					log.Println(err)
+					break
+				}
 			}
 		}
 		err = connection.Close()
