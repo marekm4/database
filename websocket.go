@@ -43,19 +43,49 @@ func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.R
 	}
 }
 
-func main() {
-	database := NewDatabase()
+func ReloadDatabase(database Database) error {
 	_, err := Exec(os.Getenv("DOWNLOAD_COMMAND"))
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 	err = Load(database, "database.txt")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReloadRemoteDatabase() error {
+	url := os.Getenv("RELOAD_URL")
+	if len(url) > 0 {
+		request, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return err
+		}
+		client := &http.Client{}
+		_, err = client.Do(request)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func main() {
+	database := NewDatabase()
+	err := ReloadDatabase(database)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
+	})
+	http.HandleFunc("/reload", func(w http.ResponseWriter, r *http.Request) {
+		err := ReloadDatabase(database)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	})
 	http.HandleFunc("/database", DatabaseHandleFunc(database))
 
@@ -71,10 +101,10 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		//err = Reload()
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
+		err = ReloadRemoteDatabase()
+		if err != nil {
+			log.Fatal(err)
+		}
 		os.Exit(0)
 	}(database)
 

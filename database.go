@@ -40,3 +40,15 @@ func (d Database) Increment(key string, value int) {
 func (d Database) Append(key string, value string) {
 	d.Lists[key] = append(d.Lists[key], value)
 }
+
+func (d Database) Clear() {
+	for key := range d.Values {
+		delete(d.Values, key)
+	}
+	for key := range d.Counters {
+		delete(d.Counters, key)
+	}
+	for key := range d.Lists {
+		delete(d.Lists, key)
+	}
+}
