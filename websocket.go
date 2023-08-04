@@ -22,18 +22,14 @@ func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.R
 				log.Println(err)
 				break
 			}
-			query, err := ParseQuery(string(message))
+			query := ParseQuery(string(message))
 			log.Println(query)
 			output := ""
+			response, err := query.Execute(database)
 			if err != nil {
 				output = err.Error()
 			} else {
-				response, err := query.Execute(database)
-				if err != nil {
-					output = err.Error()
-				} else {
-					output = response
-				}
+				output = response
 			}
 			err = connection.WriteMessage(messageType, []byte(output))
 			if err != nil {
