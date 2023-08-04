@@ -84,7 +84,7 @@ func main() {
 	http.HandleFunc("/reload", func(w http.ResponseWriter, r *http.Request) {
 		err := ReloadDatabase(database)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 	})
 	http.HandleFunc("/database", DatabaseHandleFunc(database))
@@ -103,7 +103,7 @@ func main() {
 		}
 		err = ReloadRemoteDatabase()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln(err)
 		}
 		os.Exit(0)
 	}(database)
