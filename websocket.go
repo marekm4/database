@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 var Upgrader = websocket.Upgrader{}
@@ -47,6 +49,23 @@ func main() {
 		http.ServeFile(w, r, "index.html")
 	})
 	http.HandleFunc("/database", DatabaseHandleFunc(database))
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+	go func(database Database) {
+		<-signals
+		err := Dump(database, "database.txt")
+		if err != nil {
+			log.Fatal(err)
+		}
+		//err = Reload()
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		os.Exit(0)
+	}(database)
+
 	port := "8080"
 	if len(os.Getenv("PORT")) > 0 {
 		port = os.Getenv("PORT")
