@@ -78,3 +78,17 @@ func TestDatabase_Append(t *testing.T) {
 	values = database.Select("orders")
 	assert.DeepEqual(t, values, []string{firstOrder, secondOrder})
 }
+
+func TestDatabase_Clear(t *testing.T) {
+	// Given database with data
+	database := NewDatabase()
+	key := "username"
+	database.Update(key, "john")
+
+	// When database is cleared
+	database.Clear()
+
+	// Then data is gone
+	values := database.Select(key)
+	assert.DeepEqual(t, values, []string{""})
+}

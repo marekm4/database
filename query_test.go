@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestParseQuery_Ok(t *testing.T) {
+func TestParseQuery(t *testing.T) {
 	testCases := map[string]struct {
 		Query    string
 		Expected Query
