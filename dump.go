@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -40,4 +41,42 @@ func DumpQueries(database Database) []string {
 		}
 	}
 	return queries
+}
+
+func Load(database Database, filename string) error {
+	if _, err := os.Stat(filename); err != nil {
+		return nil
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(file)
+	queries := []string{}
+	for scanner.Scan() {
+		line := scanner.Text()
+		queries = append(queries, line)
+	}
+	LoadQueries(database, queries)
+
+	err = scanner.Err()
+	if err != nil {
+		return err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadQueries(database Database, queries []string) {
+	for _, queryString := range queries {
+		query := ParseQuery(queryString)
+		query.Execute(database)
+	}
 }

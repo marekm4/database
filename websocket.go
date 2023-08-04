@@ -45,6 +45,11 @@ func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.R
 
 func main() {
 	database := NewDatabase()
+	err := Load(database, "database.txt")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
@@ -52,7 +57,6 @@ func main() {
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-
 	go func(database Database) {
 		<-signals
 		err := Dump(database, "database.txt")
