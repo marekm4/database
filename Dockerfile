@@ -3,13 +3,15 @@ FROM golang as builder
 WORKDIR /app
 COPY . /app
 
-RUN go mod download
-RUN go build -o main websocket.go query.go database.go dump.go command.go
+ENV CGO_ENABLED=0
 
-FROM google/cloud-sdk:alpine
+RUN go mod download
+RUN go build
+
+FROM scratch
 
 WORKDIR /app
 COPY --from=builder /app/index.html /app/index.html
-COPY --from=builder /app/main /app/main
+COPY --from=builder /app/database /app/database
 
-CMD ["/app/main"]
+CMD ["/app/database"]
