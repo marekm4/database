@@ -45,7 +45,11 @@ func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.R
 
 func main() {
 	database := NewDatabase()
-	err := Load(database, "database.txt")
+	_, err := Exec(os.Getenv("DOWNLOAD_COMMAND"))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = Load(database, "database.txt")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -61,7 +65,11 @@ func main() {
 		<-signals
 		err := Dump(database, "database.txt")
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln(err)
+		}
+		_, err = Exec(os.Getenv("UPLOAD_COMMAND"))
+		if err != nil {
+			log.Fatalln(err)
 		}
 		//err = Reload()
 		//if err != nil {
