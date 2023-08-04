@@ -7,18 +7,17 @@ import (
 	"os"
 )
 
-var upgrader = websocket.Upgrader{}
+var Upgrader = websocket.Upgrader{}
 
-func CreateDatabaseServer(database Database) func(w http.ResponseWriter, r *http.Request) {
+func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		c, err := upgrader.Upgrade(w, r, nil)
+		connection, err := Upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		defer c.Close()
 		for {
-			mt, message, err := c.ReadMessage()
+			messageType, message, err := connection.ReadMessage()
 			if err != nil {
 				log.Println(err)
 				break
@@ -36,21 +35,25 @@ func CreateDatabaseServer(database Database) func(w http.ResponseWriter, r *http
 					output = response
 				}
 			}
-			err = c.WriteMessage(mt, []byte(output))
+			err = connection.WriteMessage(messageType, []byte(output))
 			if err != nil {
 				log.Println(err)
 				break
 			}
 		}
+		err = connection.Close()
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
 func main() {
-	database := Database{make(map[string]any)}
+	database := NewDatabase()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
-	http.HandleFunc("/database", CreateDatabaseServer(database))
+	http.HandleFunc("/database", DatabaseHandleFunc(database))
 	port := "8080"
 	if len(os.Getenv("PORT")) > 0 {
 		port = os.Getenv("PORT")
