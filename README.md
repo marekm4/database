@@ -1,6 +1,41 @@
 # serverless-database-over-http
 Serverless database server over HTTP
 
+## Usage
+### Docker compose
+```
+services:
+  web:
+    build: .
+    environment:
+      DATABASE_SOCKET: ws://db:8080/database
+  db:
+    image: "marekm43/database"
+```
+By default, it uses port `8080`, this can be changed by setting up `PORT` env. Dumps are stored at `/app/database.txt`.
+See [websocket_test.go](websocket_test.go) for more examples.
+
+### Queries
+#### Get value
+```
+select username
+```
+
+#### Set or update value
+```
+update username john
+```
+
+#### Set or increment counter
+```
+increment money 100
+```
+
+#### Append element to collection
+```
+append orders pizza
+```
+
 ## FAQ
 ### What is it?
 It's a database server that is adapted to run as a low cost "stateless" web service in the cloud.
