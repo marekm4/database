@@ -8,7 +8,7 @@ ENV CGO_ENABLED=0
 RUN go mod download
 RUN go build
 
-FROM scratch
+FROM google/cloud-sdk:alpine
 
 WORKDIR /app
 COPY --from=builder /app/index.html /app/index.html
