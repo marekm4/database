@@ -43,20 +43,19 @@ func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.R
 	}
 }
 
-func ReloadDatabase(database Database) error {
+func ReloadDatabase(database Database, filename string) error {
 	_, err := Exec(os.Getenv("DOWNLOAD_COMMAND"))
 	if err != nil {
 		return err
 	}
-	err = Load(database, "database.txt")
+	err = Load(database, filename)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func ReloadRemoteDatabase() error {
-	url := os.Getenv("RELOAD_URL")
+func ReloadRemoteDatabase(url string) error {
 	if len(url) > 0 {
 		request, err := http.NewRequest("GET", url, nil)
 		if err != nil {
@@ -71,29 +70,40 @@ func ReloadRemoteDatabase() error {
 	return nil
 }
 
-func main() {
+func NewContainer(filename string) (Database, *http.ServeMux, error) {
 	database := NewDatabase()
-	err := ReloadDatabase(database)
+	err := ReloadDatabase(database, filename)
 	if err != nil {
-		log.Fatalln(err)
+		return database, nil, err
 	}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
-	http.HandleFunc("/reload", func(w http.ResponseWriter, r *http.Request) {
-		err := ReloadDatabase(database)
+	mux.HandleFunc("/reload", func(w http.ResponseWriter, r *http.Request) {
+		err := ReloadDatabase(database, filename)
 		if err != nil {
 			log.Println(err)
 		}
 	})
-	http.HandleFunc("/database", DatabaseHandleFunc(database))
+	mux.HandleFunc("/database", DatabaseHandleFunc(database))
+
+	return database, mux, nil
+}
+
+func main() {
+	filename := "database.txt"
+	database, mux, err := NewContainer(filename)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	go func(database Database) {
+	go func(database Database, filename string) {
 		<-signals
-		err := Dump(database, "database.txt")
+		err := Dump(database, filename)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -101,16 +111,16 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		err = ReloadRemoteDatabase()
+		err = ReloadRemoteDatabase(os.Getenv("RELOAD_URL"))
 		if err != nil {
 			log.Fatalln(err)
 		}
 		os.Exit(0)
-	}(database)
+	}(database, filename)
 
 	port := "8080"
 	if len(os.Getenv("PORT")) > 0 {
 		port = os.Getenv("PORT")
 	}
-	log.Fatalln(http.ListenAndServe(":"+port, nil))
+	log.Fatalln(http.ListenAndServe(":"+port, mux))
 }
