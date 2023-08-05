@@ -12,7 +12,7 @@ type Query interface {
 type EmptyQuery struct {
 }
 
-func (q EmptyQuery) Execute(database Database) []string {
+func (q EmptyQuery) Execute(_ Database) []string {
 	return []string{}
 }
 
@@ -36,7 +36,7 @@ func (q UpdateQuery) Execute(database Database) []string {
 
 type IncrementQuery struct {
 	Key   string
-	Value int
+	Value float64
 }
 
 func (q IncrementQuery) Execute(database Database) []string {
@@ -74,7 +74,7 @@ func ParseQuery(query string) Query {
 		return UpdateQuery{key, value}
 	}
 	if operation == "increment" {
-		numericValue, _ := strconv.Atoi(value)
+		numericValue, _ := strconv.ParseFloat(value, 64)
 		return IncrementQuery{key, numericValue}
 	}
 	if operation == "append" {

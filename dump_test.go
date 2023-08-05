@@ -21,8 +21,8 @@ func TestDumpQueries(t *testing.T) {
 	// Then we have queries
 	assert.DeepEqual(t, queries, []string{
 		"update username john",
-		"increment age 30",
-		"increment money 100",
+		"increment age 30.000000",
+		"increment money 100.000000",
 		"append orders pizza",
 		"append orders burgers",
 	})
@@ -44,8 +44,8 @@ func TestLoadQueries(t *testing.T) {
 
 	// Then we have them in database
 	assert.DeepEqual(t, database.Select("username"), []string{"john"})
-	assert.DeepEqual(t, database.Select("age"), []string{"30"})
-	assert.DeepEqual(t, database.Select("money"), []string{"100"})
+	assert.DeepEqual(t, database.Select("age"), []string{"30.000000"})
+	assert.DeepEqual(t, database.Select("money"), []string{"100.000000"})
 	assert.DeepEqual(t, database.Select("orders"), []string{"pizza", "burgers"})
 }
 
@@ -74,8 +74,8 @@ func TestFiles(t *testing.T) {
 
 	// Then records are there
 	assert.DeepEqual(t, database.Select("username"), []string{"john"})
-	assert.DeepEqual(t, database.Select("age"), []string{"30"})
-	assert.DeepEqual(t, database.Select("money"), []string{"100"})
+	assert.DeepEqual(t, database.Select("age"), []string{"30.000000"})
+	assert.DeepEqual(t, database.Select("money"), []string{"100.000000"})
 	assert.DeepEqual(t, database.Select("orders"), []string{"pizza", "burgers"})
 
 	// Clean up

@@ -33,7 +33,7 @@ func DumpQueries(database Database) []string {
 		queries = append(queries, fmt.Sprintf("update %s %s", key, value))
 	}
 	for key, value := range database.Counters {
-		queries = append(queries, fmt.Sprintf("increment %s %d", key, value))
+		queries = append(queries, fmt.Sprintf("increment %s %f", key, value))
 	}
 	for key, values := range database.Lists {
 		for _, value := range values {
