@@ -1,5 +1,5 @@
-# serverless-database-over-http
-Serverless database server over HTTP
+# database
+Serverless database server over HTTP websocket
 
 ## Usage
 ### Docker compose
