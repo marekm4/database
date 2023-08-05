@@ -44,6 +44,8 @@ func DumpQueries(database Database) []string {
 }
 
 func Load(database Database, filename string) error {
+	database.Clear()
+
 	if _, err := os.Stat(filename); err != nil {
 		return nil
 	}
@@ -59,7 +61,6 @@ func Load(database Database, filename string) error {
 		line := scanner.Text()
 		queries = append(queries, line)
 	}
-	database.Clear()
 	LoadQueries(database, queries)
 
 	err = scanner.Err()
