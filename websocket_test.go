@@ -50,7 +50,7 @@ func TestWebsocket(t *testing.T) {
 	if err != nil {
 		assert.NilError(t, err)
 	}
-	assert.Equal(t, string(message), "100")
+	assert.Equal(t, string(message), "100.000000")
 
 	// When we add value
 	err = ws.WriteMessage(websocket.TextMessage, []byte("append orders pizza"))

@@ -1,15 +1,17 @@
 package main
 
-import "strconv"
+import (
+	"fmt"
+)
 
 type Database struct {
 	Values   map[string]string
-	Counters map[string]int
+	Counters map[string]float64
 	Lists    map[string][]string
 }
 
 func NewDatabase() Database {
-	return Database{make(map[string]string), make(map[string]int), make(map[string][]string)}
+	return Database{make(map[string]string), make(map[string]float64), make(map[string][]string)}
 }
 
 func (d Database) Select(key string) []string {
@@ -17,7 +19,7 @@ func (d Database) Select(key string) []string {
 		return []string{value}
 	}
 	if counter, ok := d.Counters[key]; ok {
-		return []string{strconv.Itoa(counter)}
+		return []string{fmt.Sprintf("%f", counter)}
 	}
 	if list, ok := d.Lists[key]; ok {
 		return list
@@ -29,7 +31,7 @@ func (d Database) Update(key string, value string) {
 	d.Values[key] = value
 }
 
-func (d Database) Increment(key string, value int) {
+func (d Database) Increment(key string, value float64) {
 	if counter, ok := d.Counters[key]; ok {
 		d.Counters[key] = counter + value
 	} else {

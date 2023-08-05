@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"gotest.tools/v3/assert"
-	"strconv"
 	"testing"
 )
 
@@ -41,21 +41,21 @@ func TestDatabase_Update(t *testing.T) {
 func TestDatabase_Increment(t *testing.T) {
 	// Given empty database
 	database := NewDatabase()
-	money := 5
+	money := 5.5
 
 	// When we increment counter
 	database.Increment("money", money)
 
 	// Then counter is set
 	values := database.Select("money")
-	assert.DeepEqual(t, values, []string{strconv.Itoa(money)})
+	assert.DeepEqual(t, values, []string{fmt.Sprintf("%f", money)})
 
 	// When we increment counter
 	database.Increment("money", money)
 
 	// Then counter is incremented
 	values = database.Select("money")
-	assert.DeepEqual(t, values, []string{strconv.Itoa(money * 2)})
+	assert.DeepEqual(t, values, []string{fmt.Sprintf("%f", money*2)})
 }
 
 func TestDatabase_Append(t *testing.T) {
