@@ -70,6 +70,22 @@ func ReloadRemoteDatabase(url string) error {
 	return nil
 }
 
+func Shutdown(database Database, filename string) error {
+	err := Dump(database, filename)
+	if err != nil {
+		return err
+	}
+	_, err = Exec(os.Getenv("UPLOAD_COMMAND"))
+	if err != nil {
+		return err
+	}
+	err = ReloadRemoteDatabase(os.Getenv("RELOAD_URL"))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewContainer(filename string) (Database, *http.ServeMux, error) {
 	database := NewDatabase()
 	err := ReloadDatabase(database, filename)
@@ -101,26 +117,21 @@ func main() {
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	go func(database Database, filename string) {
+	go func() {
 		<-signals
-		err := Dump(database, filename)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		_, err = Exec(os.Getenv("UPLOAD_COMMAND"))
-		if err != nil {
-			log.Fatalln(err)
-		}
-		err = ReloadRemoteDatabase(os.Getenv("RELOAD_URL"))
+		err := Shutdown(database, filename)
 		if err != nil {
 			log.Fatalln(err)
 		}
 		os.Exit(0)
-	}(database, filename)
+	}()
 
 	port := "8080"
 	if len(os.Getenv("PORT")) > 0 {
 		port = os.Getenv("PORT")
 	}
-	log.Fatalln(http.ListenAndServe(":"+port, mux))
+	err = http.ListenAndServe(":"+port, mux)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
