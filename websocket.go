@@ -70,7 +70,7 @@ func ReloadRemoteDatabase(url string) error {
 	return nil
 }
 
-func Shutdown(database Database, filename string) error {
+func StoreDatabase(database Database, filename string) error {
 	err := Dump(database, filename)
 	if err != nil {
 		return err
@@ -103,6 +103,12 @@ func NewContainer(filename string) (Database, *http.ServeMux, error) {
 			log.Println(err)
 		}
 	})
+	mux.HandleFunc("/store", func(w http.ResponseWriter, r *http.Request) {
+		err := StoreDatabase(database, filename)
+		if err != nil {
+			log.Println(err)
+		}
+	})
 	mux.HandleFunc("/database", DatabaseHandleFunc(database))
 
 	return database, mux, nil
@@ -119,7 +125,7 @@ func main() {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-signals
-		err := Shutdown(database, filename)
+		err := StoreDatabase(database, filename)
 		if err != nil {
 			log.Fatalln(err)
 		}

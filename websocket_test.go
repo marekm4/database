@@ -103,21 +103,46 @@ func TestWebsocket_Client(t *testing.T) {
 	assert.Check(t, strings.Contains(string(body), "<title>Database</title>"))
 }
 
-func TestWebsocket_Shutdown(t *testing.T) {
-	// Given database with data
-	database := NewDatabase()
-	database.Update("username", "john")
+func TestWebsocket_Store(t *testing.T) {
+	// Given empty database server
 	filename := "test.txt"
-
-	// When we shut it down
-	err := Shutdown(database, filename)
+	_, mux, err := NewContainer(filename)
+	assert.NilError(t, err)
+	server := httptest.NewServer(mux)
+	ws, _, err := websocket.DefaultDialer.Dial(strings.Replace(server.URL, "http", "ws", 1)+"/database", nil)
 	assert.NilError(t, err)
 
-	// Then state is saved
-	database = NewDatabase()
-	err = Load(database, filename)
+	// When we add value
+	err = ws.WriteMessage(websocket.TextMessage, []byte("update username john"))
 	assert.NilError(t, err)
-	assert.DeepEqual(t, database.Select("username"), []string{"john"})
+
+	// Then value is there
+	err = ws.WriteMessage(websocket.TextMessage, []byte("select username"))
+	assert.NilError(t, err)
+	_, message, err := ws.ReadMessage()
+	assert.NilError(t, err)
+	assert.Equal(t, string(message), "john")
+
+	// When we store dump
+	request, err := http.NewRequest("GET", server.URL+"/store", nil)
+	assert.NilError(t, err)
+	client := &http.Client{}
+	_, err = client.Do(request)
+	assert.NilError(t, err)
+
+	// And when we load it again
+	_, mux, err = NewContainer("test.txt")
+	assert.NilError(t, err)
+	server = httptest.NewServer(mux)
+	ws, _, err = websocket.DefaultDialer.Dial(strings.Replace(server.URL, "http", "ws", 1)+"/database", nil)
+	assert.NilError(t, err)
+
+	// Then value is there
+	err = ws.WriteMessage(websocket.TextMessage, []byte("select username"))
+	assert.NilError(t, err)
+	_, message, err = ws.ReadMessage()
+	assert.NilError(t, err)
+	assert.Equal(t, string(message), "john")
 
 	// Clean up
 	err = os.Remove(filename)
