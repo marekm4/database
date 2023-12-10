@@ -30,6 +30,13 @@ func TestWebsocket(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, string(message), "john")
 
+	// Then value is on the list
+	err = ws.WriteMessage(websocket.TextMessage, []byte("list user"))
+	assert.NilError(t, err)
+	_, message, err = ws.ReadMessage()
+	assert.NilError(t, err)
+	assert.Equal(t, string(message), "username")
+
 	// When we increment value
 	err = ws.WriteMessage(websocket.TextMessage, []byte("increment money 100"))
 	assert.NilError(t, err)
