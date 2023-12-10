@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Database struct {
@@ -12,6 +13,26 @@ type Database struct {
 
 func NewDatabase() Database {
 	return Database{make(map[string]string), make(map[string]float64), make(map[string][]string)}
+}
+
+func (d Database) List(prefix string) []string {
+	keys := []string{}
+	for key := range d.Values {
+		if strings.HasPrefix(key, prefix) {
+			keys = append(keys, key)
+		}
+	}
+	for key := range d.Counters {
+		if strings.HasPrefix(key, prefix) {
+			keys = append(keys, key)
+		}
+	}
+	for key := range d.Lists {
+		if strings.HasPrefix(key, prefix) {
+			keys = append(keys, key)
+		}
+	}
+	return keys
 }
 
 func (d Database) Select(key string) []string {

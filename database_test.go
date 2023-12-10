@@ -92,3 +92,18 @@ func TestDatabase_Clear(t *testing.T) {
 	values := database.Select(key)
 	assert.DeepEqual(t, values, []string{""})
 }
+
+func TestDatabase_List(t *testing.T) {
+	// Given database with user data
+	database := NewDatabase()
+	database.Update("user_name", "John")
+	database.Increment("user_money", 100.0)
+	database.Append("user_orders", "order 1")
+	database.Increment("account_money", 1000.0)
+
+	// When we get user keys
+	keys := database.List("user_")
+
+	// Then user keys are returned
+	assert.DeepEqual(t, keys, []string{"user_name", "user_money", "user_orders"})
+}

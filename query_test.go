@@ -10,7 +10,8 @@ func TestParseQuery(t *testing.T) {
 		Query    string
 		Expected Query
 	}{
-		"Empty":     {"select", EmptyQuery{}},
+		"Empty":     {"list", EmptyQuery{}},
+		"List":      {"list user", ListQuery{"user"}},
 		"Select":    {"select user_name", SelectQuery{"user_name"}},
 		"Update":    {"update user_name john", UpdateQuery{"user_name", "john"}},
 		"Increment": {"increment user_money 5.5", IncrementQuery{"user_money", 5.5}},

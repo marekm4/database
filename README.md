@@ -16,6 +16,11 @@ By default, it uses port `8080`, this can be changed by setting up `PORT` env. D
 See [websocket_test.go](websocket_test.go) for more examples.
 
 ### Queries
+#### List values
+```
+list user
+```
+
 #### Get value
 ```
 select username

@@ -16,6 +16,14 @@ func (q EmptyQuery) Execute(_ Database) []string {
 	return []string{}
 }
 
+type ListQuery struct {
+	Key string
+}
+
+func (q ListQuery) Execute(database Database) []string {
+	return database.List(q.Key)
+}
+
 type SelectQuery struct {
 	Key string
 }
@@ -61,6 +69,9 @@ func ParseQuery(query string) Query {
 	}
 	operation := query[:i]
 	key := query[i+1:]
+	if operation == "list" {
+		return ListQuery{key}
+	}
 	if operation == "select" {
 		return SelectQuery{key}
 	}
