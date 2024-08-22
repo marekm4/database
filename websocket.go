@@ -43,52 +43,9 @@ func DatabaseHandleFunc(database Database) func(w http.ResponseWriter, r *http.R
 	}
 }
 
-func ReloadDatabase(database Database, filename string) error {
-	_, err := Exec(os.Getenv("DOWNLOAD_COMMAND"))
-	if err != nil {
-		return err
-	}
-	err = Load(database, filename)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ReloadRemoteDatabase(url string) error {
-	if len(url) > 0 {
-		request, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			return err
-		}
-		client := &http.Client{}
-		_, err = client.Do(request)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func StoreDatabase(database Database, filename string) error {
-	err := Dump(database, filename)
-	if err != nil {
-		return err
-	}
-	_, err = Exec(os.Getenv("UPLOAD_COMMAND"))
-	if err != nil {
-		return err
-	}
-	err = ReloadRemoteDatabase(os.Getenv("RELOAD_URL"))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func NewContainer(filename string) (Database, *http.ServeMux, error) {
 	database := NewDatabase()
-	err := ReloadDatabase(database, filename)
+	err := Load(database, filename)
 	if err != nil {
 		return database, nil, err
 	}
@@ -96,18 +53,6 @@ func NewContainer(filename string) (Database, *http.ServeMux, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
-	})
-	mux.HandleFunc("/reload", func(w http.ResponseWriter, r *http.Request) {
-		err := ReloadDatabase(database, filename)
-		if err != nil {
-			log.Println(err)
-		}
-	})
-	mux.HandleFunc("/store", func(w http.ResponseWriter, r *http.Request) {
-		err := StoreDatabase(database, filename)
-		if err != nil {
-			log.Println(err)
-		}
 	})
 	mux.HandleFunc("/database", DatabaseHandleFunc(database))
 
@@ -125,7 +70,7 @@ func main() {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-signals
-		err := StoreDatabase(database, filename)
+		err := Dump(database, filename)
 		if err != nil {
 			log.Fatalln(err)
 		}
