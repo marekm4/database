@@ -14,7 +14,7 @@ func main() {
 	delim := byte('\n')
 	database := NewDatabase()
 
-	filename := "database"
+	filename := "database.txt"
 	if len(os.Getenv("FILE")) > 0 {
 		filename = os.Getenv("FILE")
 	}

@@ -4,8 +4,6 @@ WORKDIR /app
 COPY . /app
 
 ENV CGO_ENABLED=0
-
-RUN go mod download
 RUN go build
 
 FROM scratch
